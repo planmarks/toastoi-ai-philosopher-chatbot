@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Toastoi AI Philosopher</title>
+
+    <style>
+      body {
+        background-color: #242730;
+        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      }
+      .chat-container {
+        width: 80%;
+        max-width: 800px;
+        margin: 0 auto;
+        border: 1px solid #d3d3d3;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+      .chat-header {
+        background-color: #F5F5F5;
+        padding: 10px 15px;
+        border-bottom: 1px solid #cccccc00;
+        font-size: 24px;
+        font-weight: bold;
+      }
+      .chat-history {
+        padding: 15px;
+        height: 400px;
+        overflow-y: auto;
+      }
+      .chat-message {
+        padding: 10px;
+        background-color: #e7e7e7;
+        border-radius: 5px;
+        margin-bottom: 10px;
+        max-width: 80%;
+      }
+      .chat-message-self {
+        padding: 10px;
+        background-color: #aaf5ff;
+        align-self: flex-end;
+        border-radius: 5px;
+        margin-bottom: 10px;
+        max-width: 80%;
+      }
+      .chat-message-other {
+        padding: 10px;
+        background-color: #fff;
+        align-self: flex-start;
+        border-radius: 5px;
+        margin-bottom: 10px;
+        max-width: 80%;
+      }
+      .chat-message-text {
+        font-size: 16px;
+        margin: 0;
+      }
+      .chat-input {
+        display: flex;
+        margin: 0;
+        border-top: 1px solid #ccc;
+        padding: 10px 15px;
+        align-items: center;
+      }
+      .chat-input input[type="text"] {
+        width: 100%;
+        margin-right: 10px;
+        border: none;
+        padding: 10px;
+        border-radius: 5px;
+        font-size: 16px;
+      }
+      .chat-input button[type="submit"] {
+        background-color: #273349;
+        color: #dbdbdb;
+        text-transform: uppercase;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 5px;
+        font-size: 16px;
+        font-weight: medium;
+        cursor: pointer;
+      }
+      .type-text {
+      opacity: 0;
+      animation: fade-in 0.5s forwards;
+      }
+      @keyframes fade-in {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+    </style>
+
+  </head>
+    <body>
+      <div>
+        <div>
+        </div>
+      </div>
+      <div class="chat-container">
+        <div class="chat-header">Talk to Toastoi the Philosopher</div>
+        <div class="chat-history" id="chat-history"></div>
+        <form class="chat-input" id="chat-form">
+          <input type="text" id="message-input" placeholder="Type your message...">
+          <button type="submit" id="submit-button">Send</button>
+        </form>
+      </div>
+
+      <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+      <script src="{{ url_for('static', filename='effects.js') }}"></script>
+    </div>
+    <div class="loader"></div>
+    <div class="type-text"></div>
+  </div>
+  
+      <script>
+        $(document).ready(function() {
+    var loader = $('.loader');
+    var typeText = $('.type-text');
+
+    // Submit the form on pressing Enter key
+    $('#message-input').keypress(function(e) {
+        if (e.keyCode === 13) {
+            e.preventDefault();
+            $('#submit-button').click();
+        }
+    });
+
+    // Submit the form on clicking the Send button
+    $('#submit-button').click(function(e) {
+        e.preventDefault();
+
+        // Display loader while message is being sent
+        loader.show();
+        typeText.hide();
+
+        // Send message to server and receive response
+        $.ajax({
+            type: "POST",
+            url: "/chatbot",
+            data: { question: $('#message-input').val() },
+            beforeSend: function() {
+                // Show typetext effect
+                typeText.text('...').fadeIn();
+            },
+            complete: function() {
+                // Hide typetext effect
+                typeText.hide();
+            },
+            success: function(response) {
+                // Hide loader
+                loader.hide();
+
+                // Type response text on screen with delay of 1 second
+                setTimeout(function() {
+                  typeText.text(response.response);
+                }, 1000);
+
+                // Append user message to chat history
+                $('#chat-history').append($('<div class="chat-message-self user-message">').text($('#message-input').val()));
+
+                // Append response message to chat history with delay of 1 second
+                setTimeout(function() {
+                    $('#chat-history').append($('<div class="chat-message-other toastoi-message">').text(response.response));
+                    // Scroll to bottom of chat history
+                    $('#chat-history').scrollTop($('#chat-history')[0].scrollHeight);
+                }, 1000);
+
+                // Clear input field
+                $('#message-input').val('');
+            },
+            error: function(xhr, status, error) {
+                // Hide loader
+                loader.hide();
+
+                // Display error message
+                alert('Error: ' + error);
+            }
+        });
+    });
+});
+
+      </script>
+      
+    </body>
+</html>
